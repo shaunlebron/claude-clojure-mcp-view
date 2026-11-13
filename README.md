@@ -101,8 +101,13 @@ bin/release.bb patch   # or minor, major
 `main` holds no built files. `bin/release.bb` refuses a release with no Unreleased notes.
 It bumps the version, builds and tests, dates the notes as the new version, and commits
 that, then commits the plugin (`dist/`, with `LICENSE` and `CHANGELOG.md`) to the `release`
-branch, tags that commit `vX.Y.Z`, and pushes. The marketplace in `.claude-plugin/marketplace.json` installs from `release`; pin a version
-with its tag as `ref`.
+branch, tags that commit `vX.Y.Z`, and pushes.
+
+The repo's root `.claude-plugin/` holds only `marketplace.json`, the catalog that
+`claude plugin install --marketplace shaunlebron/claude-clojure-mcp-view` reads from `main`.
+Claude Code looks for it at that path, so it stays at the root. It points the install at
+the `release` branch; pin a version with its tag as `ref`. The plugin's own manifest is
+`dist/.claude-plugin/plugin.json`.
 
 ## License
 
