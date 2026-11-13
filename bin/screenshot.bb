@@ -1,10 +1,10 @@
 #!/usr/bin/env bb
 ;; Draws one eval the way the plugin does, from what the built plugin returns: prints it to
 ;; the terminal and writes screenshot.svg in the My Clear Dark Ghostty theme.
-;; - screenshot.cljs runs under `claude plugin test` and prints each drawn tree as JSON
+;; - src/screenshot.cljs runs under `claude plugin test` and prints each drawn tree as JSON
 ;; - this lays the trees out in terminal cells (Box padding, margins, rows; Text; Button),
 ;;   in the colors the plugin names, from the theme's palette
-;; - the engine's row for the call is a stand-in from screenshot.cljs
+;; - the engine's row for the call is a stand-in from src/screenshot.cljs
 
 (load-file (str (babashka.fs/path (babashka.fs/parent (babashka.fs/absolutize *file*))
                                   "build.bb")))
@@ -43,18 +43,17 @@
 
 (defn drawn-trees []
   (let [tmp (fs/create-temp-dir)
-        compiled (compile! (fs/path root "screenshot.cljs"))]
+        compiled (compile! (fs/path root "src/screenshot.cljs"))]
+    (fs/copy-tree dist tmp)
+    (fs/delete (fs/path tmp "main.test.ts"))
     (bundle! compiled (fs/path tmp "screenshot.test.ts") "--external:claude-code/testing")
     (fs/delete compiled)
-    (fs/create-dirs (fs/path tmp ".claude-plugin"))
-    (doseq [f [".claude-plugin/plugin.json" "hooks.json" "main.jsx" "types.d.ts"]]
-      (fs/copy (fs/path root f) (fs/path tmp f)))
     (let [out (:out (shell {:out :string :err :out :continue true}
                            "claude" "plugin" "test" (str tmp)))]
       (fs/delete-tree tmp)
       (or (seq (keep #(some-> (re-find #"DRAWN:(.*)" %) second json/parse-string)
                      (str/split-lines out)))
-          (throw (ex-info "screenshot.cljs printed no drawn trees" {:output out}))))))
+          (throw (ex-info "src/screenshot.cljs printed no drawn trees" {:output out}))))))
 
 ;;——————————————————————————————————————————————————————————————————————————————
 ;; Laying out in terminal cells

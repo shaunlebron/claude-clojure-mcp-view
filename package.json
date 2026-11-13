@@ -16,9 +16,9 @@
     "clojure-mcp"
   ],
   "scripts": {
-    "build": "bb build.bb",
-    "test": "bb build.bb && claude plugin test .",
-    "release": "bb release.bb"
+    "build": "bin/build.bb",
+    "test": "bin/build.bb && claude plugin test dist",
+    "release": "bin/release.bb"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

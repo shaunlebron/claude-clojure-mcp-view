@@ -1,5 +1,8 @@
 node_modules/
 .nrepl-port
-/main.jsx
-/*.test.ts
+/dist/main.jsx
+/dist/*.test.ts
+/dist/.claude-plugin/types/
+/src/*.jsx
+/src/*.mjs
 *.tgz

@@ -1,6 +1,6 @@
 #!/usr/bin/env bb
-;; Compiles the mod (main.cljs) and its tests (test.cljs) with squint, then bundles each
-;; with esbuild, in the form Claude Code accepts:
+;; Compiles the mod (src/main.cljs) and its tests (src/test.cljs) with squint, then bundles
+;; each with esbuild into dist/, the plugin, in the form Claude Code accepts:
 ;; - a mod imports only the plugin's own files, so the bundle carries the squint runtime
 ;;   it uses (esbuild drops the rest)
 ;; - its mod loader refuses `var` bindings for register and hooks; squint and esbuild
@@ -13,11 +13,12 @@
          '[cheshire.core :as json]
          '[clojure.string :as str])
 
-(def root (fs/parent (fs/absolutize *file*)))
+(def root (fs/parent (fs/parent (fs/absolutize *file*))))
+(def dist (fs/path root "dist"))
 
 ;; Claude Code reads the plugin's version from plugin.json, so it follows package.json's,
 ;; which release.bb bumps.
-(let [manifest (str (fs/path root ".claude-plugin/plugin.json"))
+(let [manifest (str (fs/path dist ".claude-plugin/plugin.json"))
       read-json #(json/parse-string (slurp (str %)))
       version (get (read-json (fs/path root "package.json")) "version")
       style {:pretty {:indentation 2 :object-field-value-separator ": "}}]
@@ -39,10 +40,10 @@
          "--allow-overwrite" "--log-level=warning"
          (str "--outfile=" (fs/relativize root out)) opts))
 
-;; Only the mod's own section of the bundle, after its `// main.jsx` marker; the squint
+;; Only the mod's own section of the bundle, after its `// src/main.jsx` marker; the squint
 ;; runtime above it is left as esbuild wrote it.
 (defn mod-vars->const [js]
-  (let [i (str/index-of js "// main.jsx\n")]
+  (let [i (str/index-of js "// src/main.jsx\n")]
     (str (subs js 0 i) (str/replace (subs js i) #"(?m)^var " "const "))))
 
 (defn comment-lines [text]
@@ -59,10 +60,12 @@
        "//\n"
        (comment-lines (slurp (str (fs/path root "node_modules/highlight.js/LICENSE"))))))
 
-(let [main (compile! (fs/path root "main.cljs"))]
-  (bundle! main main (str "--banner:js=" bundle-notice))
-  (spit (str main) (mod-vars->const (slurp (str main)))))
+(let [compiled (compile! (fs/path root "src/main.cljs"))
+      main (str (fs/path dist "main.jsx"))]
+  (bundle! compiled main (str "--banner:js=" bundle-notice))
+  (fs/delete compiled)
+  (spit main (mod-vars->const (slurp main))))
 
-(let [test (compile! (fs/path root "test.cljs"))]
-  (bundle! test (fs/path root "main.test.ts") "--external:claude-code/testing")
+(let [test (compile! (fs/path root "src/test.cljs"))]
+  (bundle! test (fs/path dist "main.test.ts") "--external:claude-code/testing")
   (fs/delete test))

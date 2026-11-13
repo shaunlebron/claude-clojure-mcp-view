@@ -1,10 +1,11 @@
 #!/usr/bin/env bb
-;; Releases the plugin: `bb release.bb patch` (or minor, major).
+;; Releases the plugin: `bin/release.bb patch` (or minor, major).
 ;; - bumps package.json's version, builds (which copies it into plugin.json), tests and
 ;;   validates, dates CHANGELOG.md's Unreleased notes as that version, then commits these
 ;;   on the current branch
-;; - commits the built plugin to the release branch, which .claude-plugin/marketplace.json
-;;   installs from, and tags that commit vX.Y.Z, so a tag always names a built plugin
+;; - commits the built plugin (dist/, with LICENSE and CHANGELOG.md) to the release branch,
+;;   which .claude-plugin/marketplace.json installs from, and tags that commit vX.Y.Z, so a
+;;   tag always names a built plugin
 ;; - pushes the branch, the release branch and the tag
 
 (require '[babashka.fs :as fs]
@@ -12,10 +13,9 @@
          '[cheshire.core :as json]
          '[clojure.string :as str])
 
-(def root (str (fs/parent (fs/absolutize *file*))))
+(def root (str (fs/parent (fs/parent (fs/absolutize *file*)))))
 (def release-branch "release")
-(def plugin-files [".claude-plugin/plugin.json" "hooks.json" "main.jsx" "types.d.ts"
-                   "LICENSE" "CHANGELOG.md"])
+(def dist (fs/path root "dist"))
 (def changelog (str (fs/path root "CHANGELOG.md")))
 (def unreleased "## Unreleased\n")
 
@@ -47,6 +47,17 @@
                                      (str unreleased "\n## " version " ("
                                           (java.time.LocalDate/now) ")\n"))))
 
+;; Leaves out the tests and the editor types Claude Code writes into a loaded plugin.
+(defn plugin-files []
+  (concat (for [f (fs/glob dist "**" {:hidden true})
+                :let [path (str (fs/relativize dist f))]
+                :when (and (fs/regular-file? f)
+                           (not (str/ends-with? path ".test.ts"))
+                           (not (str/starts-with? path ".claude-plugin/types/")))]
+            [f path])
+          (for [f ["LICENSE" "CHANGELOG.md"]]
+            [(fs/path root f) f])))
+
 (defn release-worktree! [dir]
   (shell {:dir root :continue true :err :string} "git" "fetch" "origin" release-branch)
   (if (zero? (:exit (shell {:dir root :continue true :out :string :err :string}
@@ -61,9 +72,9 @@
     (try
       (release-worktree! dir)
       (shell {:dir dir} "git" "rm" "-rq" "--ignore-unmatch" ".")
-      (doseq [f plugin-files]
-        (fs/create-dirs (fs/parent (fs/path dir f)))
-        (fs/copy (fs/path root f) (fs/path dir f) {:replace-existing true}))
+      (doseq [[from to] (plugin-files)]
+        (fs/create-dirs (fs/parent (fs/path dir to)))
+        (fs/copy from (fs/path dir to) {:replace-existing true}))
       (shell {:dir dir} "git" "add" "-A")
       (shell {:dir dir} "git" "commit" "-qm"
              (str "Release " tag " (built from " source ")"))
@@ -75,18 +86,18 @@
 (let [[part] *command-line-args*
       branch (str/trim (:out (git "branch" "--show-current")))]
   (when-not (#{"major" "minor" "patch"} part)
-    (throw (ex-info "Usage: bb release.bb major|minor|patch" {:arg part})))
+    (throw (ex-info "Usage: bin/release.bb major|minor|patch" {:arg part})))
   (when (seq (str/trim (:out (git "status" "--porcelain"))))
     (throw (ex-info "Commit or stash changes first: the release is built from HEAD" {})))
   (when (str/blank? (unreleased-notes))
     (throw (ex-info "Add this release's notes under ## Unreleased in CHANGELOG.md" {})))
   (let [version (bump-package! part)]
-    (load-file (str (fs/path root "build.bb")))
-    (shell {:dir root} "claude" "plugin" "test" ".")
-    (shell {:dir root} "claude" "plugin" "validate" ".")
+    (load-file (str (fs/path root "bin/build.bb")))
+    (shell {:dir root} "claude" "plugin" "test" "dist")
+    (shell {:dir root} "claude" "plugin" "validate" "dist")
     (date-changelog! version)
     (git "commit" "-qm" (str "Version " version)
-         "package.json" ".claude-plugin/plugin.json" "CHANGELOG.md")
+         "package.json" "dist/.claude-plugin/plugin.json" "CHANGELOG.md")
     (let [tag (commit-release! version)]
       (shell {:dir root} "git" "push" "origin" branch release-branch tag)
       (println "Released" tag))))

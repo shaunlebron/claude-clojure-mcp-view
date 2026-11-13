@@ -56,29 +56,30 @@ A folded section ends with `… +n lines (click to expand)`, and an unfolded one
 
 ## Developing
 
-The mod is `main.cljs` and its tests are `test.cljs`, both in
+The mod is `src/main.cljs` and its tests are `src/test.cljs`, both in
 [squint](https://github.com/squint-cljs/squint). Needs node and
-[babashka](https://babashka.org).
+[babashka](https://babashka.org). `dist/` is the plugin: `plugin.json`, `hooks.json` and
+`types.d.ts` are edited there, and the build writes `main.jsx` beside them.
 
 ```sh
 npm install    # once: squint-cljs, esbuild and highlight.js, pinned in package.json
-npm run build  # bb build.bb: compile main.cljs and test.cljs, then bundle each
-npm test       # build, then claude plugin test . against the compiled module
-bb screenshot.bb  # redraw screenshot.svg from what the built plugin draws
+npm run build  # bin/build.bb: compile src/main.cljs and src/test.cljs, then bundle each
+npm test       # build, then claude plugin test dist against the compiled module
+bin/screenshot.bb  # redraw screenshot.svg from what the built plugin draws
 ```
 
 To try a change in Claude Code, run a session in this folder with the checkout loaded, and a
 babashka REPL for its evals (`.mcp.json` connects clojure-mcp to port 1667):
 
 ```sh
-bb nrepl-server 1667        # in one terminal
-claude --plugin-dir .       # in another; ask it to eval something, then ctrl+o
+bb nrepl-server 1667          # in one terminal
+claude --plugin-dir dist      # in another; ask it to eval something, then ctrl+o
 ```
 
 The session watches the folder, so a build reloads the plugin. Leave the released plugin
 uninstalled at user scope, or both copies load in this folder.
 
-`build.bb` adjusts squint's output for Claude Code: a mod imports only the plugin's own files
+`bin/build.bb` adjusts squint's output for Claude Code: a mod imports only the plugin's own files
 (so esbuild bundles in the parts of squint's runtime the mod uses), its mod loader accepts
 `register` and hooks only as `const` or `function` bindings (squint and esbuild emit `var`),
 and `claude plugin test` runs only `*.test.ts` files (so each compiled test is written as one).
@@ -89,14 +90,13 @@ It also copies package.json's version into plugin.json.
 Note each change under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md) as you make it, then:
 
 ```sh
-bb release.bb patch   # or minor, major
+bin/release.bb patch   # or minor, major
 ```
 
-`main` holds only the source. `release.bb` refuses a release with no Unreleased notes. It
-bumps the version, builds and tests, dates the notes as the new version, and commits that,
-then commits the built plugin (`plugin.json`, `hooks.json`, `main.jsx`, `types.d.ts`,
-`LICENSE`, `CHANGELOG.md`) to the `release` branch, tags that commit `vX.Y.Z`, and pushes.
-The marketplace in `.claude-plugin/marketplace.json` installs from `release`; pin a version
+`main` holds no built files. `bin/release.bb` refuses a release with no Unreleased notes.
+It bumps the version, builds and tests, dates the notes as the new version, and commits
+that, then commits the plugin (`dist/`, with `LICENSE` and `CHANGELOG.md`) to the `release`
+branch, tags that commit `vX.Y.Z`, and pushes. The marketplace in `.claude-plugin/marketplace.json` installs from `release`; pin a version
 with its tag as `ref`.
 
 ## License

@@ -2,8 +2,8 @@
   (:require ["claude-code/testing" :refer [expect test]]
             [clojure.string :as str]))
 
-;; Not a test: screenshot.bb runs it to print what the plugin draws for one eval, folded at
-;; 10 lines, and lays that out as screenshot.svg.
+;; Not a test: bin/screenshot.bb runs it to print what the plugin draws for one eval,
+;; folded at 10 lines, and lays that out as screenshot.svg.
 
 (def eval-tool "mcp__clojure-mcp__clojure_eval")
 
