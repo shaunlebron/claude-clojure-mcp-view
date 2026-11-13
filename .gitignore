@@ -1,5 +1,5 @@
 node_modules/
 .nrepl-port
-src/*.jsx
-test/*.test.ts
+/main.jsx
+/*.test.ts
 *.tgz

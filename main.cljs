@@ -1,4 +1,4 @@
-(ns register
+(ns main
   (:require [clojure.string :as str]))
 
 (def eval-tool "mcp__clojure-mcp__clojure_eval")

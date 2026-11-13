@@ -7,7 +7,7 @@
   "files": [
     ".claude-plugin/plugin.json",
     "hooks.json",
-    "src/register.jsx",
+    "main.jsx",
     "types"
   ],
   "scripts": {

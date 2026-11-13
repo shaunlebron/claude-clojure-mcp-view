@@ -51,13 +51,13 @@ A folded section ends with `… +n lines (click to expand)`, and an unfolded one
 
 ## Developing
 
-The mod is `src/register.cljs` and its tests are `test/render_test.cljs`, both in
+The mod is `main.cljs` and its tests are `test.cljs`, both in
 [squint](https://github.com/squint-cljs/squint). Needs node and
 [babashka](https://babashka.org).
 
 ```sh
 npm install    # once: squint-cljs and esbuild, pinned in package.json
-npm run build  # bb build.bb: compile each .cljs beside its source, then bundle it
+npm run build  # bb build.bb: compile main.cljs and test.cljs, then bundle each
 npm test       # build, then claude plugin test . against the compiled module
 ```
 

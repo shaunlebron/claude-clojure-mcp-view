@@ -1,1 +1,1 @@
-{ "modules": ["./src/register.jsx"] }
+{ "modules": ["./main.jsx"] }

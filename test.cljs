@@ -1,4 +1,4 @@
-(ns render-test
+(ns test
   (:require ["claude-code/testing" :refer [expect test]]
             [clojure.string :as str]))
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bb
-;; Compiles the mod and its tests with squint, each beside its source, then bundles each
+;; Compiles the mod (main.cljs) and its tests (test.cljs) with squint, then bundles each
 ;; with esbuild, in the form Claude Code accepts:
 ;; - a mod imports only the plugin's own files, so the bundle carries the squint runtime
 ;;   it uses (esbuild drops the rest)
@@ -39,22 +39,16 @@
          "--allow-overwrite" "--log-level=warning"
          (str "--outfile=" (fs/relativize root out)) opts))
 
-;; Only the mod's own section of the bundle, after its `// src/<name>.jsx` marker; the
-;; squint runtime above it is left as esbuild wrote it.
-(defn mod-vars->const [js module-path]
-  (let [marker (str "// " module-path "\n")
-        i (str/index-of js marker)]
+;; Only the mod's own section of the bundle, after its `// main.jsx` marker; the squint
+;; runtime above it is left as esbuild wrote it.
+(defn mod-vars->const [js]
+  (let [i (str/index-of js "// main.jsx\n")]
     (str (subs js 0 i) (str/replace (subs js i) #"(?m)^var " "const "))))
 
-(doseq [src (fs/glob (fs/path root "src") "*.cljs")]
-  (let [compiled (compile! src)]
-    (bundle! compiled compiled)
-    (spit (str compiled) (mod-vars->const (slurp (str compiled))
-                                          (str (fs/relativize root compiled))))))
+(let [main (compile! (fs/path root "main.cljs"))]
+  (bundle! main main)
+  (spit (str main) (mod-vars->const (slurp (str main)))))
 
-(doseq [src (fs/glob (fs/path root "test") "*_test.cljs")]
-  (let [compiled (compile! src)
-        test-name (str/replace (fs/strip-ext (fs/file-name src)) #"_test$" "")]
-    (bundle! compiled (fs/path (fs/parent src) (str test-name ".test.ts"))
-             "--external:claude-code/testing")
-    (fs/delete compiled)))
+(let [test (compile! (fs/path root "test.cljs"))]
+  (bundle! test (fs/path root "main.test.ts") "--external:claude-code/testing")
+  (fs/delete test))
