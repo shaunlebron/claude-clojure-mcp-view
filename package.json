@@ -6,6 +6,7 @@
     "name": "Shaun Williams",
     "url": "https://github.com/shaunlebron"
   },
+  "license": "EPL-2.0",
   "type": "module",
   "keywords": [
     "claude-code",

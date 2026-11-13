@@ -45,8 +45,14 @@
   (let [i (str/index-of js "// main.jsx\n")]
     (str (subs js 0 i) (str/replace (subs js i) #"(?m)^var " "const "))))
 
+(def squint-notice
+  (str "// Includes parts of squint-cljs's runtime "
+       "(https://github.com/squint-cljs/squint),\n"
+       "// Copyright © 2022 - 2026 Michiel Borkent, "
+       "under the Eclipse Public License 1.0."))
+
 (let [main (compile! (fs/path root "main.cljs"))]
-  (bundle! main main)
+  (bundle! main main (str "--banner:js=" squint-notice))
   (spit (str main) (mod-vars->const (slurp (str main)))))
 
 (let [test (compile! (fs/path root "test.cljs"))]

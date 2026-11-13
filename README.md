@@ -82,3 +82,12 @@ npm version patch   # bumps package.json and plugin.json, commits, tags
 npm publish         # tests and validates first (prepublishOnly)
 git push --follow-tags
 ```
+
+## License
+
+Copyright © 2026 Shaun Williams. Distributed under the Eclipse Public License 2.0, the same as
+clojure-mcp; see [LICENSE](LICENSE).
+
+The published `main.jsx` bundles parts of the
+[squint](https://github.com/squint-cljs/squint) runtime, Copyright © 2022 - 2026 Michiel Borkent,
+under the Eclipse Public License 1.0.
