@@ -56,7 +56,7 @@ The mod is `main.cljs` and its tests are `test.cljs`, both in
 [babashka](https://babashka.org).
 
 ```sh
-npm install    # once: squint-cljs and esbuild, pinned in package.json
+npm install    # once: squint-cljs, esbuild and highlight.js, pinned in package.json
 npm run build  # bb build.bb: compile main.cljs and test.cljs, then bundle each
 npm test       # build, then claude plugin test . against the compiled module
 ```
@@ -90,4 +90,6 @@ clojure-mcp; see [LICENSE](LICENSE).
 
 The published `main.jsx` bundles parts of the
 [squint](https://github.com/squint-cljs/squint) runtime, Copyright © 2022 - 2026 Michiel Borkent,
-under the Eclipse Public License 1.0.
+under the Eclipse Public License 1.0, and
+[highlight.js](https://github.com/highlightjs/highlight.js), Copyright © 2006 Ivan Sagalaev,
+under the BSD 3-Clause License, whose text is at the top of `main.jsx`.

@@ -38,8 +38,11 @@
             :props {:tool eval-tool :tool_use_id "e1" :output out
                     :isExpanded expanded? :isErrored false}})))
 
-(defn ^:async code-sources [ui]
-  (mapv #(:source (:props %)) (js-await (.findAll ui {:type "Code"}))))
+;; The sections drawn highlighted: Texts made of colored Texts.
+(defn ^:async highlighted-sources [ui]
+  (->> (js-await (.findAll ui {:type "Text"}))
+       (filter #(some map? (:children %)))
+       (mapv :text)))
 
 (defn ^:async texts [ui]
   (mapv :text (js-await (.findAll ui {:type "Text"}))))
@@ -60,10 +63,10 @@
         (engine-draws on "engine")
         (let [row (js-await (mount-row $ true))]
           (is (js-await (found? row {:type "Text" :text "engine"})) true)
-          (is (js-await (code-sources row)) [";; Request:" code])
+          (is (js-await (highlighted-sources row)) [";; Request:" code])
           (js-await (.unmount row)))
         (let [result (js-await (mount-result $ true))]
-          (is (js-await (code-sources result)) [";; Response:" value])
+          (is (js-await (highlighted-sources result)) [";; Response:" value])
           (js-await (.unmount result)))))
 
 (test "request: code under the row, expanded only, highlighted"
@@ -73,12 +76,13 @@
         (settings-are on {:request true :response false :highlight true})
         (let [ui (js-await (mount-row $ true))]
           (is (js-await (found? ui {:type "Text" :text "engine row"})) true)
-          (is (:language (:props (js-await (.find ui {:type "Code"})))) "clojure")
-          (is (js-await (code-sources ui)) [";; Request:" code])
+          (is (js-await (highlighted-sources ui)) [";; Request:" code])
+          (is (:props (js-await (.find ui {:type "Text" :text #"^let$"})))
+              {:color "ansi256(12)"})
           (js-await (.unmount ui)))
         (doseq [[expanded? tool] [[false eval-tool] [true "Bash"]]]
           (let [untouched (js-await (mount-row $ expanded? tool code))]
-            (is (js-await (code-sources untouched)) [])
+            (is (js-await (highlighted-sources untouched)) [])
             (js-await (.unmount untouched))))))
 
 (test "response: label, printed output and => column, without the ns line"
@@ -91,7 +95,7 @@
             (doseq [text [";; Response:" "printed" "=> " value]]
               (is (js-await (found? ui {:type "Text" :text text})) true))
             (is (js-await (found? ui {:type "Text" :text footer})) false)
-            (is (js-await (code-sources ui)) [])
+            (is (js-await (highlighted-sources ui)) [])
             (js-await (.unmount ui))))
         (let [image (js-await (mount-result $ true [{:type "image" :data ""}]))]
           (is (js-await (found? image {:type "Text" :text "engine result"})) true)
@@ -106,7 +110,8 @@
           (doseq [out [(mapv (fn [text] {:type "text" :text text}) forms)
                        (str/join "" forms)]]
             (let [ui (js-await (mount-result $ true out))]
-              (is (js-await (code-sources ui)) [";; Response:" "nil" "3" "\"two values\""])
+              (is (js-await (highlighted-sources ui))
+                  [";; Response:" "nil" "3" "\"two values\""])
               (is (count (js-await (.findAll ui {:type "Text" :text "=> "}))) 3)
               (is (js-await (found? ui {:type "Text" :text "first"})) true)
               (js-await (.unmount ui)))))))

@@ -45,14 +45,22 @@
   (let [i (str/index-of js "// main.jsx\n")]
     (str (subs js 0 i) (str/replace (subs js i) #"(?m)^var " "const "))))
 
-(def squint-notice
+(defn comment-lines [text]
+  (str/join "\n" (map #(str/trimr (str "// " %)) (str/split-lines (str/trim text)))))
+
+(def bundle-notice
   (str "// Includes parts of squint-cljs's runtime "
        "(https://github.com/squint-cljs/squint),\n"
        "// Copyright © 2022 - 2026 Michiel Borkent, "
-       "under the Eclipse Public License 1.0."))
+       "under the Eclipse Public License 1.0.\n"
+       "//\n"
+       "// Includes highlight.js (https://github.com/highlightjs/highlight.js), "
+       "under this license:\n"
+       "//\n"
+       (comment-lines (slurp (str (fs/path root "node_modules/highlight.js/LICENSE"))))))
 
 (let [main (compile! (fs/path root "main.cljs"))]
-  (bundle! main main (str "--banner:js=" squint-notice))
+  (bundle! main main (str "--banner:js=" bundle-notice))
   (spit (str main) (mod-vars->const (slurp (str main)))))
 
 (let [test (compile! (fs/path root "test.cljs"))]

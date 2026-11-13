@@ -1,5 +1,7 @@
 (ns main
-  (:require [clojure.string :as str]))
+  (:require ["highlight.js/lib/core$default" :as hljs]
+            ["highlight.js/lib/languages/clojure$default" :as clojure]
+            [clojure.string :as str]))
 
 (def eval-tool "mcp__clojure-mcp__clojure_eval")
 (def ns-line #"\*=+ [^*\n]+ =+\*")
@@ -107,12 +109,56 @@
             label])))
 
 ;;——————————————————————————————————————————————————————————————————————————————
+;; Highlighting
+;;——————————————————————————————————————————————————————————————————————————————
+
+(.registerLanguage hljs "clojure" clojure)
+
+;; The terminal's own palette colors (0-15), so the code is drawn in each person's palette,
+;; as Claude Code draws code in a reply. A name like "cyan" would be drawn in an RGB of
+;; Claude Code's own, and the "ansi:cyan" it passes through is refused in a plugin's tree.
+(def palette
+  (zipmap [:black :red :green :yellow :blue :magenta :cyan :white
+           :bright-black :bright-red :bright-green :bright-yellow
+           :bright-blue :bright-magenta :bright-cyan :bright-white]
+          (map #(str "ansi256(" % ")") (range 16))))
+
+(def scope-colors
+  {"comment"   (:bright-black palette)
+   "string"    (:green palette)
+   "regex"     (:green palette)
+   "character" (:green palette)
+   "symbol"    (:cyan palette)
+   "number"    (:yellow palette)
+   "literal"   (:magenta palette)
+   "keyword"   (:bright-blue palette)
+   "built_in"  (:bright-blue palette)
+   "name"      (:bright-blue palette)})
+
+(defn scope-spans [node parent-scope]
+  (let [scope (or (.-scope node) parent-scope)]
+    (into [] (mapcat #(if (string? %)
+                        [{:text % :color (get scope-colors scope)}]
+                        (scope-spans % scope)))
+          (.-children node))))
+
+;; The token tree highlight.js builds, read as Claude Code reads it for its own Code.
+(defn clojure-spans [source]
+  (scope-spans (.. (.highlight hljs source {:language "clojure" :ignoreIllegals true})
+                   -_emitter -rootNode)
+               nil))
+
+;;——————————————————————————————————————————————————————————————————————————————
 ;; Drawing
 ;;——————————————————————————————————————————————————————————————————————————————
 
-(defn clj-view [{:keys [Code Text]} highlight? source]
+(defn clj-view [{:keys [Text]} highlight? source]
   (if highlight?
-    #jsx [Code {:source source :language "clojure"}]
+    #jsx [Text (vec (map-indexed (fn [i {:keys [text color]}]
+                                   (if color
+                                     #jsx [Text {:key (str i) :color color} text]
+                                     text))
+                                 (clojure-spans source)))]
     #jsx [Text source]))
 
 (defn item-view [{:keys [Box Text] :as ui} highlight? {:keys [kind text]}]
