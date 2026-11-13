@@ -1,13 +1,8 @@
 # clojure-mcp-view
 
-A [Claude Code](https://code.claude.com) plugin that shows
-[clojure-mcp](https://github.com/bhauman/clojure-mcp) evals readably in the expanded view
-(ctrl+o): the code Claude sent, with real newlines, under the call's row, and the response
-with each value lined up after its `=>`. The normal view and what the model reads are
-unchanged.
-
-For the Claude Code CLI in a terminal only: it draws in the ctrl+o view, in the terminal's
-own palette colors, so the desktop app and IDE extensions keep their usual view.
+A [Claude Code](https://code.claude.com) plugin (CLI only) that shows
+[clojure-mcp](https://github.com/bhauman/clojure-mcp) evals more readably in
+the expanded view (enabled by `ctrl+o`).
 
 Before:
 
@@ -30,9 +25,14 @@ After:
 claude plugin install clojure-mcp-view --marketplace shaunlebron/claude-clojure-mcp-view
 ```
 
-This adds the repository as the marketplace `clojure-mcp-view`, then installs the plugin from it.
+To update:
 
-Or, for everyone working in a project, add it to the project's `.claude/settings.json`:
+
+```
+claude plugin update clojure-mcp-view
+```
+
+To share on a project, add to `.claude/settings.json`:
 
 ```json
 {
@@ -45,7 +45,6 @@ Or, for everyone working in a project, add it to the project's `.claude/settings
 }
 ```
 
-Update with `claude plugin update clojure-mcp-view`.
 
 ## Settings
 
