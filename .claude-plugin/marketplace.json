@@ -1,6 +1,21 @@
 {
-  "name": "clojure-mcp-view-dev",
-  "description": "This checkout, for working on the plugin: /reload-plugins picks up a rebuild.",
-  "owner": { "name": "Shaun Williams" },
-  "plugins": [ { "name": "clojure-mcp-view", "source": "./" } ]
+  "name": "clojure-mcp-view",
+  "owner": {
+    "name": "Shaun Williams",
+    "url": "https://github.com/shaunlebron"
+  },
+  "metadata": {
+    "description": "clojure-mcp-view, a Claude Code CLI plugin for reading clojure-mcp evals"
+  },
+  "plugins": [
+    {
+      "name": "clojure-mcp-view",
+      "description": "Readable clojure-mcp evals in the Claude Code CLI's expanded view (ctrl+o)",
+      "source": {
+        "source": "github",
+        "repo": "shaunlebron/claude-clojure-mcp-view",
+        "ref": "release"
+      }
+    }
+  ]
 }

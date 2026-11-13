@@ -13,26 +13,26 @@ own palette colors, so the desktop app and IDE extensions keep their usual view.
 
 ## Install
 
-Add it to a project's `.claude/settings.json`:
+```sh
+claude plugin install clojure-mcp-view --marketplace shaunlebron/claude-clojure-mcp-view
+```
+
+This adds the repository as the marketplace `clojure-mcp-view`, then installs the plugin from it.
+
+Or, for everyone working in a project, add it to the project's `.claude/settings.json`:
 
 ```json
 {
   "extraKnownMarketplaces": {
     "clojure-mcp-view": {
-      "source": {
-        "source": "settings",
-        "name": "clojure-mcp-view",
-        "owner": { "name": "Shaun Williams" },
-        "plugins": [
-          { "name": "clojure-mcp-view",
-            "source": { "source": "npm", "package": "clojure-mcp-view" } }
-        ]
-      }
+      "source": { "source": "github", "repo": "shaunlebron/claude-clojure-mcp-view" }
     }
   },
   "enabledPlugins": { "clojure-mcp-view@clojure-mcp-view": true }
 }
 ```
+
+Update with `claude plugin update clojure-mcp-view`.
 
 ## Settings
 
@@ -67,13 +67,9 @@ npm test       # build, then claude plugin test . against the compiled module
 bb screenshot.bb  # redraw screenshot.svg from what the built plugin draws
 ```
 
-To try a change in Claude Code, add this checkout as a marketplace once, install from it, and
-`/reload-plugins` after each build:
-
-```sh
-claude plugin marketplace add ~/code/claude-clojure-mcp-view
-claude plugin install clojure-mcp-view@clojure-mcp-view-dev
-```
+To try a change in Claude Code, start `claude --plugin-dir ~/code/claude-clojure-mcp-view`
+to load this checkout in place of the released plugin. The session watches the folder, so a
+build reloads the plugin.
 
 `build.bb` adjusts squint's output for Claude Code: a mod imports only the plugin's own files
 (so esbuild bundles in the parts of squint's runtime the mod uses), its mod loader accepts
@@ -83,11 +79,18 @@ It also copies package.json's version into plugin.json.
 
 ## Releasing
 
+Note each change under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md) as you make it, then:
+
 ```sh
-npm version patch   # bumps package.json and plugin.json, commits, tags
-npm publish         # tests and validates first (prepublishOnly)
-git push --follow-tags
+bb release.bb patch   # or minor, major
 ```
+
+`main` holds only the source. `release.bb` refuses a release with no Unreleased notes. It
+bumps the version, builds and tests, dates the notes as the new version, and commits that,
+then commits the built plugin (`plugin.json`, `hooks.json`, `main.jsx`, `types.d.ts`,
+`LICENSE`, `CHANGELOG.md`) to the `release` branch, tags that commit `vX.Y.Z`, and pushes.
+The marketplace in `.claude-plugin/marketplace.json` installs from `release`; pin a version
+with its tag as `ref`.
 
 ## License
 

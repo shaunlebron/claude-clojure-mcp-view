@@ -1,6 +1,7 @@
 {
   "name": "clojure-mcp-view",
   "version": "0.1.0",
+  "private": true,
   "description": "Claude Code plugin: readable clojure-mcp evals in the expanded view (ctrl+o)",
   "author": {
     "name": "Shaun Williams",
@@ -14,17 +15,10 @@
     "clojure",
     "clojure-mcp"
   ],
-  "files": [
-    ".claude-plugin/plugin.json",
-    "hooks.json",
-    "main.jsx",
-    "types.d.ts"
-  ],
   "scripts": {
     "build": "bb build.bb",
     "test": "bb build.bb && claude plugin test .",
-    "version": "bb build.bb && git add .claude-plugin/plugin.json",
-    "prepublishOnly": "npm test && claude plugin validate ."
+    "release": "bb release.bb"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

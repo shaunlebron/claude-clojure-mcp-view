@@ -16,7 +16,7 @@
 (def root (fs/parent (fs/absolutize *file*)))
 
 ;; Claude Code reads the plugin's version from plugin.json, so it follows package.json's,
-;; which `npm version` bumps.
+;; which release.bb bumps.
 (let [manifest (str (fs/path root ".claude-plugin/plugin.json"))
       read-json #(json/parse-string (slurp (str %)))
       version (get (read-json (fs/path root "package.json")) "version")
