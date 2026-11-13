@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "clojure-mcp": {
+      "command": "clojure",
+      "args": [
+        "-Sdeps",
+        "{:aliases {:mcp {:replace-deps {io.github.bhauman/clojure-mcp {:git/tag \"v0.6.0\" :git/sha \"2b0213f\"}}}}}",
+        "-X:mcp",
+        "clojure-mcp.main/start",
+        ":port",
+        "1667"
+      ]
+    }
+  }
+}

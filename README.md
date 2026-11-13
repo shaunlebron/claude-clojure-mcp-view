@@ -67,9 +67,16 @@ npm test       # build, then claude plugin test . against the compiled module
 bb screenshot.bb  # redraw screenshot.svg from what the built plugin draws
 ```
 
-To try a change in Claude Code, start `claude --plugin-dir ~/code/claude-clojure-mcp-view`
-to load this checkout in place of the released plugin. The session watches the folder, so a
-build reloads the plugin.
+To try a change in Claude Code, run a session in this folder with the checkout loaded, and a
+babashka REPL for its evals (`.mcp.json` connects clojure-mcp to port 1667):
+
+```sh
+bb nrepl-server 1667        # in one terminal
+claude --plugin-dir .       # in another; ask it to eval something, then ctrl+o
+```
+
+The session watches the folder, so a build reloads the plugin. Leave the released plugin
+uninstalled at user scope, or both copies load in this folder.
 
 `build.bb` adjusts squint's output for Claude Code: a mod imports only the plugin's own files
 (so esbuild bundles in the parts of squint's runtime the mod uses), its mod loader accepts
