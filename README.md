@@ -6,6 +6,9 @@ A [Claude Code](https://code.claude.com) plugin that shows
 with each value lined up after its `=>`. The normal view and what the model reads are
 unchanged.
 
+For the Claude Code CLI in a terminal only: it draws in the ctrl+o view, in the terminal's
+own palette colors, so the desktop app and IDE extensions keep their usual view.
+
 ![A clojure-mcp eval in the expanded view, its response folded at 10 lines](screenshot.svg)
 
 ## Install
