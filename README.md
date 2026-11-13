@@ -79,6 +79,11 @@ claude --plugin-dir dist      # in another; ask it to eval something, then ctrl+
 The session watches the folder, so a build reloads the plugin. Leave the released plugin
 uninstalled at user scope, or both copies load in this folder.
 
+`.mcp.json` pins the clojure-mcp version the plugin is tested with. Its output format (the
+`=> ` lines and namespace footers) is what the plugin parses, so when clojure-mcp releases
+a new version, bump it there, check that evals still draw in ctrl+o, and update the tested
+version noted under Settings.
+
 `bin/build.bb` adjusts squint's output for Claude Code: a mod imports only the plugin's own files
 (so esbuild bundles in the parts of squint's runtime the mod uses), its mod loader accepts
 `register` and hooks only as `const` or `function` bindings (squint and esbuild emit `var`),
