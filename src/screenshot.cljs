@@ -29,7 +29,7 @@
                :children ["clojure-mcp - clojure_eval (MCP)"]}
               {:type "Text" :props {}
                :children [(str "(code: "
-                               (js/JSON.stringify (str (first (str/split code "\n")) "…"))
+                               (js/JSON.stringify code)
                                ")")]}]})
 
 (defn ^:async print-drawn [$ component props]

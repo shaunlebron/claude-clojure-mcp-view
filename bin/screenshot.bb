@@ -144,6 +144,7 @@
 (def padding {:x (* 2 font-size) :y (* 2 font-size)})
 ;; A macOS window's title bar, with its close, minimize and zoom buttons.
 (def title-bar-height 28)
+(def window-radius 12)
 (def traffic-lights ["#ff5f57" "#febc2e" "#28c840"])
 
 (defn title-bar [w]
@@ -152,38 +153,76 @@
          [:rect {:y title-bar-height :width w :height 1
                  :fill "#000000" :fill-opacity 0.4}]]
         (map-indexed (fn [i color]
-                       [:circle {:cx (+ 20 (* 20 i)) :cy (/ title-bar-height 2) :r 6
+                       [:circle {:cx (+ (/ title-bar-height 2) (* 20 i))
+                                 :cy (/ title-bar-height 2) :r 6
                                  :fill color}])
                      traffic-lights)))
 
 (defn tspan [{:keys [text bold] :as span}]
   [:tspan {:fill (rgb->hex (shown-rgb span)) :font-weight (when bold "bold")} text])
 
-;; The window's outline, inset half a pixel so the 1px border isn't clipped.
-(defn window-rect [w h attrs]
-  [:rect (merge {:x 0.5 :y 0.5 :width (dec w) :height (dec h) :rx 6} attrs)])
+(defn svg-line [i line]
+  (let [spans (filter (comp seq :text) line)
+        indicator (when (= "⏺ " (:text (first spans))) (first spans))
+        x (:x padding)
+        y (+ title-bar-height (:y padding) (* (inc i) line-height)
+             (* -0.3 font-size))]
+    ;; Draw the status dot geometrically so mobile fonts cannot substitute an emoji.
+    (list
+     (when indicator
+       [:circle {:cx (+ x (/ cell-width 2)) :cy (- y (* 0.35 font-size))
+                 :r (* 0.28 font-size) :fill (rgb->hex (shown-rgb indicator))}])
+     [:text {:x (+ x (if indicator (* 2 cell-width) 0)) :xml:space "preserve" :y y}
+      (map tspan (if indicator (rest spans) spans))])))
+
+;; Unit-radius corner extracted from SwiftUI RoundedRectangle(style: .continuous).
+;; Three cubic curves ease from a straight edge into the corner and back out.
+;; https://developer.apple.com/documentation/swiftui/roundedcornerstyle/continuous
+(def continuous-corner
+  [[[0 1.528664947]]
+   [[0 1.088490009] [0 0.868407011] [0.074911401 0.631493986]]
+   [[0.169060007 0.372824013] [0.372824013 0.169060007] [0.631493986 0.074911401]]
+   [[0.868407011 0] [1.088490009 0] [1.528664947 0]]])
+
+;; Share one outline for the fill, title-bar clip and border, inset half a pixel.
+(defn window-shape [w h attrs]
+  (let [lo 0.5
+        right (- w lo)
+        bottom (- h lo)
+        transforms [(fn [x y] [(+ lo x) (+ lo y)])
+                    (fn [x y] [(- right y) (+ lo x)])
+                    (fn [x y] [(- right x) (- bottom y)])
+                    (fn [x y] [(+ lo y) (- bottom x)])]
+        commands (map-indexed
+                  (fn [i transform]
+                    (map-indexed
+                     (fn [j points]
+                       (str (if (zero? j) (if (zero? i) "M" "L") "C")
+                            (str/join " "
+                                      (for [[x y] points
+                                            v (transform (* window-radius x)
+                                                         (* window-radius y))]
+                                        (format "%.4f" v)))))
+                     continuous-corner))
+                  transforms)]
+    [:path (merge {:d (str (str/join " " (apply concat commands)) " Z")} attrs)]))
 
 (defn svg [lines]
-  ;; Spare columns: bold text and a fallback font's ⏺ run wider than a cell.
+  ;; Spare columns: bold text can run wider than a cell.
   (let [w (+ (* 2 (:x padding)) (* cell-width (+ 4 (apply max (map width lines)))))
         h (+ title-bar-height (* 2 (:y padding)) (* line-height (count lines)))]
     (str
      (h/html
       {:mode :xml}
       [:svg {:xmlns "http://www.w3.org/2000/svg" :width w :height h
+             :viewBox (str "0 0 " w " " h)
              :font-family font-family :font-size font-size}
-       [:clipPath {:id "window"} [:rect {:width w :height h :rx 6}]]
-       (window-rect w h {:fill (:background theme)})
+       [:clipPath {:id "window"} (window-shape w h {})]
+       (window-shape w h {:fill (:background theme)})
        (title-bar w)
-       (map-indexed
-        (fn [i line]
-          [:text {:x (:x padding) :xml:space "preserve"
-                  :y (+ title-bar-height (:y padding) (* (inc i) line-height)
-                        (* -0.3 font-size))}
-           (map tspan (filter (comp seq :text) line))])
-        lines)
+       (map-indexed svg-line lines)
        ;; A light 1px border sets the image off from a dark page.
-       (window-rect w h {:fill "none" :stroke "#ffffff" :stroke-opacity 0.3})])
+       (window-shape w h {:fill "none" :stroke "#ffffff" :stroke-opacity 0.3})])
      "\n")))
 
 (when (= *file* (System/getProperty "babashka.file"))
