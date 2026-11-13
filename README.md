@@ -69,12 +69,16 @@ bin/screenshot.bb  # redraw screenshot.svg from what the built plugin draws
 ```
 
 To try a change in Claude Code, run a session in this folder with the checkout loaded, and a
-babashka REPL for its evals (`.mcp.json` connects clojure-mcp to port 1667):
+Clojure REPL for its evals (`.mcp.json` connects clojure-mcp to port 1667):
 
 ```sh
-bb nrepl-server 1667          # in one terminal
+clj -M:nrepl                  # in one terminal: deps.edn's alias, an nREPL on port 1667
 claude --plugin-dir dist      # in another; ask it to eval something, then ctrl+o
 ```
+
+Use a JVM REPL, not `bb nrepl-server`: clojure-mcp asks the REPL to pretty-print each
+value, and babashka's nREPL ignores that, so a long value arrives on one line and never
+folds.
 
 The session watches the folder, so a build reloads the plugin. Leave the released plugin
 uninstalled at user scope, or both copies load in this folder.
