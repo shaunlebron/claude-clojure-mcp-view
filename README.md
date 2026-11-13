@@ -6,6 +6,8 @@ A [Claude Code](https://code.claude.com) plugin that shows
 with each value lined up after its `=>`. The normal view and what the model reads are
 unchanged.
 
+![A clojure-mcp eval in the expanded view, its response folded at 10 lines](screenshot.svg)
+
 ## Install
 
 Add it to a project's `.claude/settings.json`:
@@ -59,6 +61,7 @@ The mod is `main.cljs` and its tests are `test.cljs`, both in
 npm install    # once: squint-cljs, esbuild and highlight.js, pinned in package.json
 npm run build  # bb build.bb: compile main.cljs and test.cljs, then bundle each
 npm test       # build, then claude plugin test . against the compiled module
+bb screenshot.bb  # redraw screenshot.svg from what the built plugin draws
 ```
 
 To try a change in Claude Code, add this checkout as a marketplace once, install from it, and
