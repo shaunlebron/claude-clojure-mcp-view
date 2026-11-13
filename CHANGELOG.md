@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.1 (2026-11-12)
+
 - First release: in the Claude Code CLI's expanded view (ctrl+o), a clojure-mcp eval shows
   the code Claude sent under the call's row, with real newlines, and the response with each
   value lined up after its `=>`, without clojure-mcp's namespace lines.

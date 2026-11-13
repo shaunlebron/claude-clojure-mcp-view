@@ -1,28 +1,23 @@
 {
-  "name": "clojure-mcp-view",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Claude Code plugin: readable clojure-mcp evals in the expanded view (ctrl+o)",
-  "author": {
-    "name": "Shaun Williams",
-    "url": "https://github.com/shaunlebron"
-  },
   "license": "EPL-2.0",
-  "type": "module",
-  "keywords": [
-    "claude-code",
-    "claude-code-plugin",
-    "clojure",
-    "clojure-mcp"
-  ],
-  "scripts": {
-    "build": "bin/build.bb",
-    "test": "bin/build.bb && claude plugin test dist",
-    "release": "bin/release.bb"
-  },
   "devDependencies": {
     "esbuild": "0.28.2",
     "highlight.js": "11.11.1",
     "squint-cljs": "0.16.213"
+  },
+  "author": {
+    "name": "Shaun Williams",
+    "url": "https://github.com/shaunlebron"
+  },
+  "private": true,
+  "name": "clojure-mcp-view",
+  "keywords": [ "claude-code", "claude-code-plugin", "clojure", "clojure-mcp" ],
+  "type": "module",
+  "version": "0.1.1",
+  "description": "Claude Code plugin: readable clojure-mcp evals in the expanded view (ctrl+o)",
+  "scripts": {
+    "build": "bin/build.bb",
+    "test": "bin/build.bb && claude plugin test dist",
+    "release": "bin/release.bb"
   }
 }

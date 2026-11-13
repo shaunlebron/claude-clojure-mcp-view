@@ -1,6 +1,6 @@
 {
   "name": "clojure-mcp-view",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Readable clojure-mcp evals in Claude Code's expanded view (ctrl+o): highlighted code and results, folding.",
   "author": {
     "name": "Shaun Williams",
