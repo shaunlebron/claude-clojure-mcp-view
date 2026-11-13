@@ -156,8 +156,10 @@
         h (+ (* 2 (:y padding)) (* line-height (count lines)))]
     (str "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" w "\" height=\"" h "\""
          " font-family=\"" font-family "\" font-size=\"" font-size "\">\n"
-         "<rect width=\"100%\" height=\"100%\" rx=\"6\" fill=\"" (:background theme)
-         "\"/>\n"
+         ;; A light 1px border, inset half a pixel so it isn't clipped, sets the image off
+         ;; from a dark page.
+         "<rect x=\"0.5\" y=\"0.5\" width=\"" (dec w) "\" height=\"" (dec h) "\" rx=\"6\""
+         " fill=\"" (:background theme) "\" stroke=\"#ffffff\" stroke-opacity=\"0.3\"/>\n"
          (str/join (map-indexed
                     (fn [i line]
                       (str "<text x=\"" (:x padding) "\" y=\""
