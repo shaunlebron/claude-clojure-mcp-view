@@ -1,0 +1,6 @@
+{
+  "name": "clojure-mcp-view-dev",
+  "description": "This checkout, for working on the plugin: /reload-plugins picks up a rebuild.",
+  "owner": { "name": "Shaun Williams" },
+  "plugins": [ { "name": "clojure-mcp-view", "source": "./" } ]
+}

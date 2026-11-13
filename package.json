@@ -1,0 +1,23 @@
+{
+  "name": "clojure-mcp-view",
+  "version": "0.1.0",
+  "description": "Claude Code plugin: readable clojure-mcp evals in the expanded view (ctrl+o)",
+  "type": "module",
+  "keywords": ["claude-code", "claude-code-plugin", "clojure", "clojure-mcp"],
+  "files": [
+    ".claude-plugin/plugin.json",
+    "hooks.json",
+    "src/register.jsx",
+    "types"
+  ],
+  "scripts": {
+    "build": "bb build.bb",
+    "test": "bb build.bb && claude plugin test .",
+    "version": "bb build.bb && git add .claude-plugin/plugin.json",
+    "prepublishOnly": "npm test && claude plugin validate ."
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "squint-cljs": "0.16.213"
+  }
+}
