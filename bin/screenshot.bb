@@ -73,6 +73,61 @@
 
 (defn width [line] (reduce + (map #(count (:text %)) line)))
 
+;; A modest window: the call's code wraps beside its row, and the request fits unwrapped.
+(def terminal-columns 80)
+
+;; Row widths for text wrapped as Claude Code's Ink wraps a Text: wrap-ansi with
+;; {trim: false, hard: true}.
+;; - breaks at spaces, each space staying at the end of its row
+;; - breaks a word only when it is wider than a row, starting it on a new row if that
+;;   saves a break
+(defn wrap-widths [text columns]
+  (let [grow (fn [rows n] (update rows (dec (count rows)) + n))]
+    (reduce
+     (fn [rows [i word]]
+       (let [n (count word)
+             rows (if (and (pos? i) (>= (peek rows) columns)) (conj rows 0) rows)
+             rows (if (pos? i) (grow rows 1) rows)
+             used (peek rows)]
+         (cond
+           (> n columns)
+           (loop [rows (if (< (quot (dec n) columns)
+                              (inc (quot (- n (- columns used) 1) columns)))
+                         (conj rows 0)
+                         rows)
+                  n n]
+             (let [room (- columns (peek rows))]
+               (if (<= n room)
+                 (grow rows n)
+                 (recur (conj (grow rows room) 0) (- n room)))))
+
+           (and (pos? used) (pos? n) (> (+ used n) columns)) (conj rows n)
+           :else (grow rows n))))
+     [0]
+     (map-indexed vector (str/split text #" " -1)))))
+
+;; Splits styled spans after n characters: [the first n, the rest].
+(defn take-chars [spans n]
+  (loop [spans spans, taken [], n n]
+    (if-let [{:keys [text] :as span} (when (pos? n) (first spans))]
+      (let [k (min n (count text))]
+        (recur (if (< k (count text))
+                 (cons (assoc span :text (subs text k)) (rest spans))
+                 (rest spans))
+               (conj taken (assoc span :text (subs text 0 k)))
+               (- n k)))
+      [taken spans])))
+
+;; Wraps one line of styled spans into rows at most `columns` wide, as Ink does.
+(defn wrap-line [line columns]
+  (let [spans (filter (comp seq :text) line)]
+    (first
+     (reduce (fn [[rows spans] n]
+               (let [[row spans] (take-chars spans n)]
+                 [(conj rows row) spans]))
+             [[] spans]
+             (wrap-widths (apply str (map :text spans)) columns)))))
+
 (defn pad-right [line w] (conj line {:text (apply str (repeat (- w (width line)) " "))}))
 
 (defn style [props inherited]
@@ -94,16 +149,32 @@
     (vec (for [i (range height)]
            (vec (mapcat (fn [d w] (pad-right (get d i []) w)) drawings widths))))))
 
-(defn layout [node st]
+(declare layout)
+
+;; A row's children, left to right, each in the columns the ones before it leave, so a
+;; long Text wraps in its own column.
+(defn layout-row [kids st columns]
+  (side-by-side
+   (first (reduce (fn [[drawings left] kid]
+                    (let [d (layout kid st left)]
+                      [(conj drawings d) (- left (apply max 0 (map width d)))]))
+                  [[] columns]
+                  kids))))
+
+(defn layout-text [spans columns]
+  (vec (mapcat #(wrap-line % columns) (spans->lines spans))))
+
+(defn layout [node st columns]
   (let [{:strs [type props children]} node
         st (style props st)]
     (case type
-      "Text"            (spans->lines (text-spans children st))
-      "Button"          (spans->lines (text-spans [(get props "label")] st))
-      "Box"             (let [kids (map #(layout % st) (remove nil? (flatten children)))
+      "Text"            (layout-text (text-spans children st) columns)
+      "Button"          (layout-text (text-spans [(get props "label")] st) columns)
+      "Box"             (let [kids (remove nil? (flatten children))
+                              inner (- columns (get props "paddingLeft" 0))
                               body (if (= "column" (get props "flexDirection"))
-                                     (vec (apply concat kids))
-                                     (side-by-side kids))
+                                     (vec (mapcat #(layout % st inner) kids))
+                                     (layout-row kids st inner))
                               pad (get props "paddingLeft" 0)
                               margin (vec (repeat (get props "marginY" 0) []))]
                           (-> margin
@@ -226,7 +297,7 @@
      "\n")))
 
 (when (= *file* (System/getProperty "babashka.file"))
-  (let [lines (vec (mapcat #(layout % {}) (drawn-trees)))]
+  (let [lines (vec (mapcat #(layout % {} terminal-columns) (drawn-trees)))]
     (println (ansi lines))
     (spit (str (fs/path root "screenshot.svg")) (svg lines))
     (println "Wrote screenshot.svg")))

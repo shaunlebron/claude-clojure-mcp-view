@@ -26,7 +26,7 @@
   {:type "Box" :props {}
    :children [{:type "Text" :props {:color "green"} :children ["⏺ "]}
               {:type "Text" :props {:bold true}
-               :children ["clojure-mcp - clojure_eval (MCP)"]}
+               :children ["clojure-mcp - Evaluate Clojure Code (MCP)"]}
               {:type "Text" :props {}
                :children [(str "(code: "
                                (js/JSON.stringify code)
