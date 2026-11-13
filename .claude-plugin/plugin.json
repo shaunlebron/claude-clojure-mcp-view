@@ -2,6 +2,6 @@
   "name": "clojure-mcp-view",
   "version": "0.1.0",
   "description": "Readable clojure-mcp evals in Claude Code's expanded view (ctrl+o): highlighted code and results, folding.",
-  "types": "./types/index.d.ts",
+  "types": "./types.d.ts",
   "hooks": "./hooks.json"
 }

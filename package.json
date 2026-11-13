@@ -8,7 +8,7 @@
     ".claude-plugin/plugin.json",
     "hooks.json",
     "main.jsx",
-    "types"
+    "types.d.ts"
   ],
   "scripts": {
     "build": "bb build.bb",
