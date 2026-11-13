@@ -12,7 +12,8 @@
 (require '[babashka.fs :as fs]
          '[babashka.process :refer [shell]]
          '[cheshire.core :as json]
-         '[clojure.string :as str])
+         '[clojure.string :as str]
+         '[hiccup2.core :as h])
 
 ;; Shaun's Ghostty theme, "My Clear Dark" (dark mode): its background, foreground and 16
 ;; palette colors, which the plugin's ansi256(0-15) colors name. In a real terminal they
@@ -132,8 +133,6 @@
                                 (when bold "\u001b[1m")
                                 text "\u001b[0m"))))))
 
-(defn xml-escape [s]
-  (str/escape s {\& "&amp;" \< "&lt;" \> "&gt;" \" "&quot;"}))
 
 (defn rgb->hex [rgb] (apply format "#%02x%02x%02x" rgb))
 
@@ -143,31 +142,49 @@
 (def cell-width (* 0.6 font-size))
 (def line-height (* 1.35 font-size))
 (def padding {:x (* 2 font-size) :y (* 2 font-size)})
+;; A macOS window's title bar, with its close, minimize and zoom buttons.
+(def title-bar-height 28)
+(def traffic-lights ["#ff5f57" "#febc2e" "#28c840"])
+
+(defn title-bar [w]
+  (list [:g {:clip-path "url(#window)"}
+         [:rect {:width w :height title-bar-height :fill "#ffffff" :fill-opacity 0.06}]
+         [:rect {:y title-bar-height :width w :height 1
+                 :fill "#000000" :fill-opacity 0.4}]]
+        (map-indexed (fn [i color]
+                       [:circle {:cx (+ 20 (* 20 i)) :cy (/ title-bar-height 2) :r 6
+                                 :fill color}])
+                     traffic-lights)))
 
 (defn tspan [{:keys [text bold] :as span}]
-  (str "<tspan fill=\"" (rgb->hex (shown-rgb span)) "\""
-       (when bold " font-weight=\"bold\"")
-       ">" (xml-escape text) "</tspan>"))
+  [:tspan {:fill (rgb->hex (shown-rgb span)) :font-weight (when bold "bold")} text])
+
+;; The window's outline, inset half a pixel so the 1px border isn't clipped.
+(defn window-rect [w h attrs]
+  [:rect (merge {:x 0.5 :y 0.5 :width (dec w) :height (dec h) :rx 6} attrs)])
 
 (defn svg [lines]
   ;; Spare columns: bold text and a fallback font's ⏺ run wider than a cell.
   (let [w (+ (* 2 (:x padding)) (* cell-width (+ 4 (apply max (map width lines)))))
-        h (+ (* 2 (:y padding)) (* line-height (count lines)))]
-    (str "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" w "\" height=\"" h "\""
-         " font-family=\"" font-family "\" font-size=\"" font-size "\">\n"
-         ;; A light 1px border, inset half a pixel so it isn't clipped, sets the image off
-         ;; from a dark page.
-         "<rect x=\"0.5\" y=\"0.5\" width=\"" (dec w) "\" height=\"" (dec h) "\" rx=\"6\""
-         " fill=\"" (:background theme) "\" stroke=\"#ffffff\" stroke-opacity=\"0.3\"/>\n"
-         (str/join (map-indexed
-                    (fn [i line]
-                      (str "<text x=\"" (:x padding) "\" y=\""
-                           (+ (:y padding) (* (inc i) line-height) (* -0.3 font-size))
-                           "\" xml:space=\"preserve\">"
-                           (str/join (map tspan (filter (comp seq :text) line)))
-                           "</text>\n"))
-                    lines))
-         "</svg>\n")))
+        h (+ title-bar-height (* 2 (:y padding)) (* line-height (count lines)))]
+    (str
+     (h/html
+      {:mode :xml}
+      [:svg {:xmlns "http://www.w3.org/2000/svg" :width w :height h
+             :font-family font-family :font-size font-size}
+       [:clipPath {:id "window"} [:rect {:width w :height h :rx 6}]]
+       (window-rect w h {:fill (:background theme)})
+       (title-bar w)
+       (map-indexed
+        (fn [i line]
+          [:text {:x (:x padding) :xml:space "preserve"
+                  :y (+ title-bar-height (:y padding) (* (inc i) line-height)
+                        (* -0.3 font-size))}
+           (map tspan (filter (comp seq :text) line))])
+        lines)
+       ;; A light 1px border sets the image off from a dark page.
+       (window-rect w h {:fill "none" :stroke "#ffffff" :stroke-opacity 0.3})])
+     "\n")))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (let [lines (vec (mapcat #(layout % {}) (drawn-trees)))]
