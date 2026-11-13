@@ -9,7 +9,20 @@ unchanged.
 For the Claude Code CLI in a terminal only: it draws in the ctrl+o view, in the terminal's
 own palette colors, so the desktop app and IDE extensions keep their usual view.
 
+Before:
+
+![The same clojure-mcp eval in the expanded view without the mod](screenshot-before.svg)
+
+After:
+
 ![A clojure-mcp eval in the expanded view, its response folded at 10 lines](screenshot.svg)
+
+- `/clj-view request off` — hide the added request code block.
+- `/clj-view response off` — use Claude Code's default response display.
+- `/clj-view highlight off` — turn off syntax highlighting.
+- `/clj-view fold 10` — set how many lines appear before folding.
+- `/clj-view fold off` — show all lines.
+- `/clj-view` — show the current settings.
 
 ## Install
 
@@ -65,7 +78,7 @@ The mod is `src/main.cljs` and its tests are `src/test.cljs`, both in
 npm install    # once: squint-cljs, esbuild and highlight.js, pinned in package.json
 npm run build  # bin/build.bb: compile src/main.cljs and src/test.cljs, then bundle each
 npm test       # build, then claude plugin test dist against the compiled module
-bin/screenshot.bb  # redraw screenshot.svg from what the built plugin draws
+bin/screenshot.bb  # redraw screenshot.svg and screenshot-before.svg
 ```
 
 To try a change in Claude Code, run a session in this folder with the checkout loaded, and a

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a matching before image to compare the default expanded MCP view with the mod.
+
 ## 0.1.1 (2026-11-12)
 
 - First release: in the Claude Code CLI's expanded view (ctrl+o), a clojure-mcp eval shows
